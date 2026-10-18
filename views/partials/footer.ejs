@@ -1,0 +1,39 @@
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-left">
+          <span class="fawry-tag">FawryPay Integration Suite</span>
+          <span class="footer-dot">•</span>
+          <span>Environment: <strong>Staging (developer.fawrystaging.com)</strong></span>
+        </div>
+        <div class="footer-links">
+          <a href="https://developer.fawrystaging.com/docs/testing/testing" target="_blank" rel="noopener">Fawry Test Cards ↗</a>
+          <a href="https://developer.fawrystaging.com/public/pay-order/" target="_blank" rel="noopener">Pay Order Portal ↗</a>
+          <a href="https://developer.fawrystaging.com/docs/payment-notifications/server-notification-v2" target="_blank" rel="noopener">Webhook V2 Docs ↗</a>
+          <a href="https://developer.fawrystaging.com/docs/payment-notifications/get-payment-status-v2" target="_blank" rel="noopener">Status API V2 Docs ↗</a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Floating Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Interactive Modal for Fawry Output & Notifications -->
+  <div id="resultModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle" class="modal-title">Operation Result</h3>
+        <button id="modalCloseBtn" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Dynamic Content Injected Here -->
+      </div>
+      <div class="modal-footer" id="modalFooter">
+        <button id="modalPrimaryBtn" class="btn btn-primary">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

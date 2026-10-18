@@ -1,0 +1,407 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="main-content">
+  <div class="content-container">
+
+    <!-- Hero / Progress Tracker Card -->
+    <div class="hero-tracker-card">
+      <div class="tracker-main">
+        <div class="tracker-header">
+          <div class="badge-pill">
+            <span class="pulse-dot"></span>
+            <span>Staging Verification Suite</span>
+          </div>
+          <span class="merchant-chip code-font">Merchant: <strong><%= config.merchantCode %></strong></span>
+        </div>
+
+        <h1 class="tracker-title">FawryPay Integration Checklist</h1>
+        <p class="tracker-desc">
+          Execute and fulfill all 8 mandatory Fawry staging test cases to finalize your integration and request account activation.
+        </p>
+
+        <!-- Dynamic Progress Bar -->
+        <% 
+          const testKeys = ['paidRefNumber', 'expiredRefNumber', 'creditCardSuccess', 'creditCardFailed', 'eWallet', 'myFawryApp', 'webhookPush', 'pullModel'];
+          const passedCount = testKeys.filter(k => testCasesStatus[k]).length;
+          const totalCount = testKeys.length;
+          const percent = Math.round((passedCount / totalCount) * 100);
+        %>
+        <div class="progress-wrap">
+          <div class="progress-header">
+            <span class="progress-label">Fulfillment Progress</span>
+            <span class="progress-percent" id="progress-percent-text"><strong><%= passedCount %></strong> of <%= totalCount %> Verified (<%= percent %>%)</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill-bar" style="width: <%= percent %>%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Webhook & Portal Bar -->
+      <div class="tracker-side">
+        <div class="side-item">
+          <span class="side-label">Active Webhook URL:</span>
+          <div class="side-code-box copy-target" onclick="copyText('<%= config.webhookUrl %>', this)" title="Click to copy">
+            <code class="code-font"><%= config.webhookUrl %></code>
+            <span class="copy-icon">📋</span>
+          </div>
+          <small class="side-hint">Set at Fawry Dashboard &gt; Orders &gt; Settings &gt; Payment Notification URL</small>
+        </div>
+
+        <div class="side-actions">
+          <a href="https://developer.fawrystaging.com/public/pay-order/" target="_blank" rel="noopener" class="btn btn-sm btn-primary">
+            <span>Fawry Pay Order Portal ↗</span>
+          </a>
+          <a href="https://developer.fawrystaging.com/ticket-tracking" target="_blank" rel="noopener" class="btn btn-sm btn-secondary">
+            <span>Fawry Progress Tracker ↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats Metric Row -->
+    <div class="quick-stats-row">
+      <div class="q-stat" onclick="filterTable('ALL')">
+        <span class="q-val"><%= stats.totalOrders %></span>
+        <span class="q-label">Total Orders</span>
+      </div>
+      <div class="q-stat q-paid" onclick="filterTable('PAID')">
+        <span class="q-val"><%= stats.paidOrders %></span>
+        <span class="q-label">✓ Paid</span>
+      </div>
+      <div class="q-stat q-pending" onclick="filterTable('UNPAID')">
+        <span class="q-val"><%= stats.unpaidOrders %></span>
+        <span class="q-label">⏳ Pending</span>
+      </div>
+      <div class="q-stat q-expired" onclick="filterTable('EXPIRED')">
+        <span class="q-val"><%= stats.expiredOrders %></span>
+        <span class="q-label">⏰ Expired</span>
+      </div>
+      <div class="q-stat q-failed" onclick="filterTable('FAILED')">
+        <span class="q-val"><%= stats.failedOrders %></span>
+        <span class="q-label">✕ Failed</span>
+      </div>
+      <div class="q-stat q-webhooks" onclick="location.href='/webhooks'">
+        <span class="q-val"><%= stats.totalWebhooks %></span>
+        <span class="q-label">🔔 Webhooks</span>
+      </div>
+    </div>
+
+    <!-- Test Category Navigation Tabs -->
+    <div class="tabs-nav-bar">
+      <div class="tabs-list">
+        <button class="tab-btn active" onclick="switchCategory('ALL', this)">All Test Cases (<%= totalCount %>)</button>
+        <button class="tab-btn" onclick="switchCategory('REF', this)">Fawry Ref (2)</button>
+        <button class="tab-btn" onclick="switchCategory('CARD', this)">Credit Card (2)</button>
+        <button class="tab-btn" onclick="switchCategory('WALLET', this)">E-Wallet &amp; App (2)</button>
+        <button class="tab-btn" onclick="switchCategory('PUSH_PULL', this)">Push &amp; Pull (2)</button>
+      </div>
+      <button id="btn-trigger-pull" class="btn btn-xs btn-outline" onclick="triggerManualPull()" title="Check all active orders on Fawry">
+        <span>🔄 Sync Status with Fawry</span>
+        <span class="spinner hidden"></span>
+      </button>
+    </div>
+
+    <!-- STREAMLINED TEST CASES GRID -->
+    <div class="test-cards-grid" id="test-cards-container">
+
+      <!-- 1. Paid Fawry Reference Number -->
+      <div class="test-card" data-category="REF">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="num-badge">01</span>
+            <span class="test-status-pill <%= testCasesStatus.paidRefNumber ? 'status-passed' : 'status-pending' %>">
+              <%= testCasesStatus.paidRefNumber ? '✓ Passed (Paid)' : 'Pending Test' %>
+            </span>
+          </div>
+          <h3 class="card-heading">Paid Fawry Reference Number</h3>
+          <p class="card-sub">Generate reference number via <code>PAYATFAWRY</code>, pay on staging POS simulator, order updates to <strong>PAID</strong>.</p>
+        </div>
+
+        <div class="card-action-box">
+          <form onsubmit="handlePaidRef(event)">
+            <input type="hidden" name="amount" value="100.00">
+            <input type="hidden" name="mobile" value="01012345678">
+            <button type="submit" class="btn btn-primary btn-block">
+              <span>Generate Reference Number (100 EGP)</span>
+              <span class="spinner hidden"></span>
+            </button>
+          </form>
+          <details class="advanced-details">
+            <summary>Custom amount / mobile</summary>
+            <div class="custom-inputs-row">
+              <input type="number" step="0.5" placeholder="Amount" value="100.00" onchange="this.form ? this.form.amount.value = this.value : null" class="input-control">
+              <input type="text" placeholder="Mobile" value="01012345678" onchange="this.form ? this.form.mobile.value = this.value : null" class="input-control">
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- 2. Expired Fawry Reference Number -->
+      <div class="test-card" data-category="REF">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="num-badge">02</span>
+            <span class="test-status-pill <%= testCasesStatus.expiredRefNumber ? 'status-passed' : 'status-pending' %>">
+              <%= testCasesStatus.expiredRefNumber ? '✓ Passed (Expired)' : 'Pending Test' %>
+            </span>
+          </div>
+          <h3 class="card-heading">Expired Fawry Reference Number</h3>
+          <p class="card-sub">Dispatches short <code>paymentExpiry</code> timestamp in request. Fawry POS rejects code as expired.</p>
+        </div>
+
+        <div class="card-action-box">
+          <form onsubmit="handleExpiredRef(event)">
+            <input type="hidden" name="amount" value="100.00">
+            <input type="hidden" name="expiryMinutes" value="2">
+            <button type="submit" class="btn btn-amber btn-block">
+              <span>Generate Expiring Code (2 Min Expiry)</span>
+              <span class="spinner hidden"></span>
+            </button>
+          </form>
+          <details class="advanced-details">
+            <summary>Custom expiry window</summary>
+            <div class="custom-inputs-row">
+              <input type="number" min="1" max="1440" placeholder="Minutes" value="2" onchange="this.form ? this.form.expiryMinutes.value = this.value : null" class="input-control">
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <!-- 3. Success Credit Card Transaction -->
+      <div class="test-card" data-category="CARD">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="num-badge">03</span>
+            <span class="test-status-pill <%= testCasesStatus.creditCardSuccess ? 'status-passed' : 'status-pending' %>">
+              <%= testCasesStatus.creditCardSuccess ? '✓ Passed (Paid)' : 'Pending Test' %>
+            </span>
+          </div>
+          <h3 class="card-heading">Success Credit Card Transaction</h3>
+          <p class="card-sub">Launches Fawry hosted gateway. Pay using valid staging test card, verified upon redirect.</p>
+        </div>
+
+        <div class="test-card-cheat">
+          <div class="cheat-item"><span>Card:</span> <code class="code-font copy-target" onclick="copyText('4508750015741019', this)">4508 7500 1574 1019 📋</code></div>
+          <div class="cheat-item"><span>Exp:</span> <code>01/39</code> | <span>CVV:</span> <code>100</code> | <span>Name:</span> <code>Fawry Test</code></div>
+        </div>
+
+        <div class="card-action-box">
+          <button class="btn btn-primary btn-block" onclick="quickStartCard('SUCCESS', this)">
+            <span>Initiate Success Card Payment ↗</span>
+            <span class="spinner hidden"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. Failed Credit Card Transaction -->
+      <div class="test-card" data-category="CARD">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="num-badge">04</span>
+            <span class="test-status-pill <%= testCasesStatus.creditCardFailed ? 'status-passed' : 'status-pending' %>">
+              <%= testCasesStatus.creditCardFailed ? '✓ Passed (Failed)' : 'Pending Test' %>
+            </span>
+          </div>
+          <h3 class="card-heading">Failed Credit Card Transaction</h3>
+          <p class="card-sub">Launches gateway with rejected test card. Verifies decline handling and status update.</p>
+        </div>
+
+        <div class="test-card-cheat cheat-danger">
+          <div class="cheat-item"><span>Card:</span> <code class="code-font copy-target" onclick="copyText('5078096700053444', this)">5078 0967 0005 3444 📋</code></div>
+          <div class="cheat-item"><span>Exp:</span> <code>01/39</code> | <span>CVV:</span> <code>100</code> | <span>OTP:</span> <code>123456</code></div>
+        </div>
+
+        <div class="card-action-box">
+          <button class="btn btn-danger btn-block" onclick="quickStartCard('FAILED', this)">
+            <span>Initiate Declined Card Payment ↗</span>
+            <span class="spinner hidden"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. Paid Mobile Wallet (E-Wallet) -->
+      <div class="test-card" data-category="WALLET">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="num-badge">05</span>
+            <span class="test-status-pill <%= testCasesStatus.eWallet ? 'status-passed' : 'status-pending' %>">
+              <%= testCasesStatus.eWallet ? '✓ Passed (Generated)' : 'Pending Test' %>
+            </span>
+          </div>
+          <h3 class="card-heading">Paid Mobile Wallet (E-Wallet)</h3>
+          <p class="card-sub">Generates E-Wallet order with <code>paymentMethod: MWALLET</code>. Staging emulator passes on generation.</p>
+        </div>
+
+        <div class="card-action-box">
+          <button class="btn btn-primary btn-block" onclick="quickStartWallet(this)">
+            <span>Generate E-Wallet Order (75 EGP)</span>
+            <span class="spinner hidden"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 6. Paid MyFawryApp Order -->
+      <div class="test-card" data-category="WALLET">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="num-badge">06</span>
+            <span class="test-status-pill <%= testCasesStatus.myFawryApp ? 'status-passed' : 'status-pending' %>">
+              <%= testCasesStatus.myFawryApp ? '✓ Passed (Generated)' : 'Pending Test' %>
+            </span>
+          </div>
+          <h3 class="card-heading">Paid MyFawryApp Order</h3>
+          <p class="card-sub">Generates My Fawry App order with live QR Code and Deep Link. Passes test upon generation.</p>
+        </div>
+
+        <div class="card-action-box">
+          <button class="btn btn-purple btn-block" onclick="quickStartMyFawry(this)">
+            <span>Generate MyFawry Order (120 EGP)</span>
+            <span class="spinner hidden"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 7. Push Model Webhook -->
+      <div class="test-card" data-category="PUSH_PULL">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="num-badge">07</span>
+            <span class="test-status-pill <%= testCasesStatus.webhookPush ? 'status-passed' : 'status-pending' %>">
+              <%= testCasesStatus.webhookPush ? '✓ Passed (Push Model Active)' : 'Pending Test' %>
+            </span>
+          </div>
+          <h3 class="card-heading">Update Order: Push Model (Webhook V2)</h3>
+          <p class="card-sub">Receives HTTP POST from Fawry, verifies SHA-256 signature, responds HTTP 200, updates status.</p>
+        </div>
+
+        <div class="card-action-box">
+          <button class="btn btn-primary btn-block" onclick="quickCreatePushOrder(this)">
+            <span>Create Push Test Order (100 EGP)</span>
+            <span class="spinner hidden"></span>
+          </button>
+          <div class="sub-action-row">
+            <button class="btn btn-xs btn-outline flex-1" onclick="dispatchLivePushTest(this)">Dispatch Signed Test Webhook</button>
+            <a href="/webhooks" class="btn btn-xs btn-secondary flex-1">View Webhooks (<%= stats.totalWebhooks %>)</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Pull Model Status Inquiry -->
+      <div class="test-card" data-category="PUSH_PULL">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="num-badge">08</span>
+            <span class="test-status-pill <%= pullStats.isRunning ? 'status-passed' : 'status-pending' %>">
+              <%= pullStats.isRunning ? '● Auto-Polling Active' : 'Stopped' %>
+            </span>
+          </div>
+          <h3 class="card-heading">Update Order: Pull Model (Inquiry V2)</h3>
+          <p class="card-sub">Scheduled job polls <code>status/v2</code> every 30s to retrieve order updates from Fawry.</p>
+        </div>
+
+        <div class="pull-meta-grid">
+          <div><span class="text-dim">Interval:</span> <strong>30s</strong></div>
+          <div><span class="text-dim">Last Check:</span> <strong id="pull-last-run"><%= pullStats.lastRun ? new Date(pullStats.lastRun).toLocaleTimeString() : 'Pending' %></strong></div>
+        </div>
+
+        <div class="card-action-box">
+          <button class="btn btn-secondary btn-block" onclick="triggerManualPull()">
+            <span>Inquire All Active Orders Now</span>
+            <span class="spinner hidden"></span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FILTERABLE ORDERS TABLE -->
+    <div class="section-block" style="margin-top: 40px;">
+      <div class="table-header-bar">
+        <div class="th-title-wrap">
+          <h2 class="section-title">Test Orders (<span id="orders-count"><%= orders.length %></span>)</h2>
+        </div>
+        
+        <div class="table-tools">
+          <input type="text" id="order-search-input" placeholder="Search reference number..." class="search-input" onkeyup="searchOrdersTable(this.value)">
+          <div class="table-filter-pills">
+            <button class="t-filter active" onclick="filterTable('ALL', this)">All</button>
+            <button class="t-filter" onclick="filterTable('PAID', this)">Paid</button>
+            <button class="t-filter" onclick="filterTable('UNPAID', this)">Unpaid</button>
+            <button class="t-filter" onclick="filterTable('EXPIRED', this)">Expired</button>
+            <button class="t-filter" onclick="filterTable('FAILED', this)">Failed</button>
+          </div>
+        </div>
+      </div>
+
+      <% if (orders.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-icon">📦</div>
+          <h4 class="empty-title">No orders created yet</h4>
+          <p class="empty-desc">Click any of the test case action buttons above to initiate your first staging order.</p>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="data-table" id="orders-data-table">
+            <thead>
+              <tr>
+                <th>Merchant Ref</th>
+                <th>Fawry Ref Number</th>
+                <th>Test Case</th>
+                <th>Method</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% orders.forEach(order => { %>
+                <tr class="order-row" data-status="<%= order.orderStatus %>" data-search="<%= order.merchantRefNum %> <%= order.fawryRefNumber || '' %>">
+                  <td>
+                    <a href="/orders/<%= order.merchantRefNum %>" class="table-link">
+                      <strong><%= order.merchantRefNum %></strong>
+                    </a>
+                  </td>
+                  <td>
+                    <% if (order.fawryRefNumber) { %>
+                      <code class="code-font copy-target" onclick="copyText('<%= order.fawryRefNumber %>', this)" title="Click to copy">
+                        <%= order.fawryRefNumber %> 📋
+                      </code>
+                    <% } else { %>
+                      <span class="text-dim">—</span>
+                    <% } %>
+                  </td>
+                  <td><span class="test-tag"><%= order.testCase %></span></td>
+                  <td><span class="method-tag"><%= order.paymentMethod %></span></td>
+                  <td><strong><%= order.amount %> EGP</strong></td>
+                  <td>
+                    <span class="order-status-pill status-<%= order.orderStatus.toLowerCase() %>">
+                      <%= order.orderStatus %>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="table-actions">
+                      <button class="btn btn-xs btn-outline" onclick="inquireOrderStatus('<%= order.merchantRefNum %>', this)" title="Query Status via Pull V2">
+                        Pull
+                      </button>
+                      <% if (order.fawryRefNumber && order.orderStatus !== 'PAID') { %>
+                        <a href="https://developer.fawrystaging.com/public/pay-order/" target="_blank" rel="noopener" class="btn btn-xs btn-primary" title="Open Fawry POS Pay Portal">
+                          Pay ↗
+                        </a>
+                      <% } %>
+                      <a href="/orders/<%= order.merchantRefNum %>" class="btn btn-xs btn-secondary">Details</a>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+</main>
+
+<%- include('partials/footer') %>

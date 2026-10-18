@@ -1,0 +1,80 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="main-content">
+  <div class="content-container">
+
+    <div class="page-top-nav">
+      <a href="/" class="back-link">← Back to Test Cases Hub</a>
+    </div>
+
+    <div class="detail-header-card">
+      <div class="detail-title-block">
+        <span class="detail-sub">Environment &amp; Setup</span>
+        <h1 class="detail-title">Fawry Staging Configuration</h1>
+        <p class="section-desc">
+          Review your environment variables and follow the step-by-step checklist to connect your live staging credentials.
+        </p>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <div class="info-card">
+        <h3 class="card-title">Current Environment Variables</h3>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">FAWRY_MERCHANT_CODE:</span>
+            <span class="info-value code-font"><%= config.merchantCode %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">FAWRY_SECURE_KEY:</span>
+            <span class="info-value code-font"><%= config.secureKey ? '••••••••' + config.secureKey.slice(-4) : 'NOT SET' %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">FAWRY_BASE_URL:</span>
+            <span class="info-value code-font"><%= config.baseUrl %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">APP_BASE_URL:</span>
+            <span class="info-value code-font"><%= config.appBaseUrl %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Webhook Endpoint:</span>
+            <span class="info-value code-font copy-target" onclick="copyText('<%= config.webhookUrl %>', this)">
+              <%= config.webhookUrl %> 📋
+            </span>
+          </div>
+        </div>
+
+        <div class="file-path-hint">
+          <span>Edit in:</span> <code>.env</code> in the project root directory.
+        </div>
+      </div>
+
+      <div class="info-card">
+        <h3 class="card-title">Where to get Fawry Credentials</h3>
+        <ol class="setup-steps">
+          <li>
+            <strong>Register / Log in to Fawry Staging:</strong>
+            <p>Visit <a href="https://atfawry.fawrystaging.com/atfawry/merchant/register" target="_blank" rel="noopener">Fawry Merchant Registration</a> or <a href="https://developer.fawrystaging.com/be-login/auth/login" target="_blank" rel="noopener">Log in</a>.</p>
+          </li>
+          <li>
+            <strong>Retrieve Merchant Code &amp; Secure Key:</strong>
+            <p>In your staging dashboard under account / integration settings, copy your <code>merchantCode</code> and <code>secureKey</code>.</p>
+          </li>
+          <li>
+            <strong>Set Webhook Notification URL:</strong>
+            <p>Go to <strong>Orders &gt;&gt; Settings =&gt; Payment Notification URL</strong> and input: <br><code><%= config.webhookUrl %></code></p>
+          </li>
+          <li>
+            <strong>If running locally with Webhooks:</strong>
+            <p>Use a tunnel like <code>ngrok http 3000</code> or localtunnel, then update <code>APP_BASE_URL</code> in <code>.env</code> with your ngrok forwarding domain.</p>
+          </li>
+        </ol>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<%- include('partials/footer') %>

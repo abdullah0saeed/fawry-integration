@@ -1,0 +1,15 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="main-content">
+  <div class="content-container">
+    <div class="empty-state" style="padding: 60px 20px;">
+      <div class="empty-icon">🔍</div>
+      <h2 class="empty-title">Page Not Found</h2>
+      <p class="empty-desc"><%= typeof message !== 'undefined' ? message : 'The requested page could not be found.' %></p>
+      <a href="/" class="btn btn-primary" style="margin-top: 16px;">Back to Test Hub</a>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>

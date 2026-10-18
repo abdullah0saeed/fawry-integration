@@ -1,0 +1,69 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="main-content">
+  <div class="content-container">
+
+    <div class="result-card-container">
+      <% const isPaid = status === 'PAID' || (query && query.orderStatus === 'PAID'); %>
+      <div class="result-hero <%= isPaid ? 'result-success' : 'result-failure' %>">
+        <div class="result-icon-circle">
+          <%= isPaid ? '✓' : '✕' %>
+        </div>
+        <h1 class="result-title"><%= isPaid ? 'Credit Card Transaction Successful!' : 'Transaction Declined / Incomplete' %></h1>
+        <p class="result-subtitle">
+          FawryPay redirected back to your configured <code>returnUrl</code>.
+        </p>
+      </div>
+
+      <div class="result-body-card">
+        <h3 class="card-title">Redirect Parameters from Fawry</h3>
+
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Merchant Reference:</span>
+            <span class="info-value code-font"><%= query.merchantRefNum || 'N/A' %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Fawry Reference:</span>
+            <span class="info-value code-font"><%= query.fawryRefNumber || query.referenceNumber || 'N/A' %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Order Status:</span>
+            <span class="info-value">
+              <span class="order-status-pill status-<%= (status || 'unknown').toLowerCase() %>">
+                <%= status %>
+              </span>
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Amount:</span>
+            <span class="info-value font-bold"><%= query.paymentAmount || query.orderAmount || '0.00' %> EGP</span>
+          </div>
+          <% if (query.signature) { %>
+            <div class="info-item">
+              <span class="info-label">Response Signature:</span>
+              <span class="info-value code-font text-xs" style="word-break: break-all;"><%= query.signature %></span>
+            </div>
+          <% } %>
+        </div>
+
+        <% if (order) { %>
+          <div class="linked-order-box">
+            <span>Linked Order in System:</span>
+            <a href="/orders/<%= order.merchantRefNum %>" class="btn btn-sm btn-secondary">
+              View Order #<%= order.merchantRefNum %> →
+            </a>
+          </div>
+        <% } %>
+
+        <div class="result-action-bar">
+          <a href="/" class="btn btn-primary">Return to Test Cases Hub</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<%- include('partials/footer') %>

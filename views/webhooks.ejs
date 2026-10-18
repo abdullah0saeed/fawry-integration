@@ -1,0 +1,128 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="main-content">
+  <div class="content-container">
+
+    <div class="page-top-nav">
+      <a href="/" class="back-link">← Back to Test Cases Hub</a>
+    </div>
+
+    <div class="detail-header-card">
+      <div class="detail-title-block">
+        <span class="detail-sub">Server-to-Server Webhook Log</span>
+        <h1 class="detail-title">Server Notification V2 Inspector</h1>
+        <p class="section-desc">
+          Monitors incoming HTTP POST notifications sent by FawryPay staging to your notification callback endpoint.
+        </p>
+      </div>
+
+      <div class="detail-actions">
+        <button class="btn btn-secondary" onclick="location.reload()">Refresh Log</button>
+        <button class="btn btn-outline" onclick="simulateWebhookPrompt()">Simulate Push Event</button>
+      </div>
+    </div>
+
+    <!-- Webhook URL Setup Guide -->
+    <div class="notice-box">
+      <div class="notice-icon">⚙️</div>
+      <div class="notice-content">
+        <h4 class="notice-title">Webhook Configuration in Fawry Merchant Dashboard</h4>
+        <p class="notice-text">
+          Navigate to: <strong>Orders &gt;&gt; Settings =&gt; Payment Notification URL</strong> in your Fawry Staging Portal.<br>
+          Paste your public webhook endpoint:
+        </p>
+        <div class="copy-url-bar" style="margin-top: 10px;">
+          <code class="code-font"><%= webhookUrl %></code>
+          <button class="btn btn-sm btn-secondary" onclick="copyText('<%= webhookUrl %>', this)">Copy URL</button>
+        </div>
+        <small class="text-muted" style="display: block; margin-top: 6px;">
+          💡 When testing locally, ensure your server is publicly accessible (e.g., using <code>ngrok http 3000</code>) and set <code>APP_BASE_URL</code> in your <code>.env</code> file.
+        </small>
+      </div>
+    </div>
+
+    <!-- Webhook Events Stream -->
+    <div class="section-block">
+      <div class="section-header">
+        <h2 class="section-title">Received Webhook Events (<%= webhooks.length %>)</h2>
+      </div>
+
+      <% if (webhooks.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h4 class="empty-title">No webhook events received yet</h4>
+          <p class="empty-desc">
+            When FawryPay sends a payment notification or status transition, it will be automatically verified and displayed here.
+          </p>
+          <button class="btn btn-primary" onclick="simulateWebhookPrompt()">Send A Test Webhook Notification</button>
+        </div>
+      <% } else { %>
+        <div class="webhook-list">
+          <% webhooks.forEach(wh => { %>
+            <div class="webhook-item-card">
+              <div class="wh-header">
+                <div class="wh-meta">
+                  <span class="wh-pill <%= wh.isValidSignature ? 'pill-success' : 'pill-danger' %>">
+                    <%= wh.isValidSignature ? '✓ Signature Verified (SHA-256)' : '⚠ Signature Mismatch' %>
+                  </span>
+                  <span class="wh-status-badge">
+                    Status: <strong><%= wh.payload ? wh.payload.orderStatus : 'UNKNOWN' %></strong>
+                  </span>
+                  <% if (wh.matchedOrder) { %>
+                    <span class="wh-matched-pill">
+                      Matched: <a href="/orders/<%= wh.matchedOrder.merchantRefNum %>">#<%= wh.matchedOrder.merchantRefNum %></a>
+                    </span>
+                  <% } %>
+                </div>
+                <div class="wh-time">
+                  <%= new Date(wh.receivedAt).toLocaleString() %>
+                </div>
+              </div>
+
+              <div class="wh-body">
+                <div class="wh-cols">
+                  <div class="wh-col">
+                    <span class="wh-prop">Merchant Ref:</span>
+                    <strong class="code-font"><%= wh.payload ? wh.payload.merchantRefNumber : 'N/A' %></strong>
+                  </div>
+                  <div class="wh-col">
+                    <span class="wh-prop">Fawry Ref:</span>
+                    <strong class="code-font"><%= wh.payload ? wh.payload.fawryRefNumber : 'N/A' %></strong>
+                  </div>
+                  <div class="wh-col">
+                    <span class="wh-prop">Amount:</span>
+                    <strong><%= wh.payload ? wh.payload.paymentAmount : '0.00' %> EGP</strong>
+                  </div>
+                  <div class="wh-col">
+                    <span class="wh-prop">Method:</span>
+                    <span><%= wh.payload ? wh.payload.paymentMethod : 'N/A' %></span>
+                  </div>
+                </div>
+
+                <div class="wh-signatures">
+                  <div class="sig-row">
+                    <span class="sig-label">Received Signature:</span>
+                    <code class="sig-val"><%= wh.incomingSignature || 'None' %></code>
+                  </div>
+                  <div class="sig-row">
+                    <span class="sig-label">Calculated Signature:</span>
+                    <code class="sig-val"><%= wh.calculatedSignature || 'None' %></code>
+                  </div>
+                </div>
+
+                <details class="json-details">
+                  <summary>View Complete JSON Body</summary>
+                  <pre class="json-box"><code><%= JSON.stringify(wh.payload, null, 2) %></code></pre>
+                </details>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+  </div>
+</main>
+
+<%- include('partials/footer') %>

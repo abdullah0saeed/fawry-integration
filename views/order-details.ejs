@@ -1,0 +1,178 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main class="main-content">
+  <div class="content-container">
+
+    <div class="page-top-nav">
+      <a href="/" class="back-link">← Back to Test Cases Hub</a>
+    </div>
+
+    <div class="detail-header-card">
+      <div class="detail-title-block">
+        <span class="detail-sub">Order Inspection</span>
+        <h1 class="detail-title">Order #<%= order.merchantRefNum %></h1>
+        <div class="detail-tags">
+          <span class="test-tag"><%= order.testCase %></span>
+          <span class="method-tag"><%= order.paymentMethod %></span>
+          <span class="order-status-pill status-<%= order.orderStatus.toLowerCase() %>">
+            <%= order.orderStatus %>
+          </span>
+        </div>
+      </div>
+
+      <div class="detail-actions">
+        <button class="btn btn-primary" onclick="inquireOrderStatus('<%= order.merchantRefNum %>', this)">
+          <span>Pull Payment Status V2</span>
+          <span class="spinner hidden"></span>
+        </button>
+        <% if (order.fawryRefNumber) { %>
+          <a href="https://developer.fawrystaging.com/public/pay-order/" target="_blank" rel="noopener" class="btn btn-secondary">
+            Pay on Fawry Portal ↗
+          </a>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <!-- Order Summary Card -->
+      <div class="info-card">
+        <h3 class="card-title">Order Summary</h3>
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Merchant Ref Num:</span>
+            <span class="info-value code-font"><%= order.merchantRefNum %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Fawry Ref Number:</span>
+            <span class="info-value code-font">
+              <% if (order.fawryRefNumber) { %>
+                <span class="copy-target" onclick="copyText('<%= order.fawryRefNumber %>', this)">
+                  <%= order.fawryRefNumber %> 📋
+                </span>
+              <% } else { %>
+                <span class="text-muted">Not assigned yet</span>
+              <% } %>
+            </span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Order Amount:</span>
+            <span class="info-value font-bold"><%= order.amount %> EGP</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Payment Method:</span>
+            <span class="info-value"><%= order.paymentMethod %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Customer Mobile:</span>
+            <span class="info-value"><%= order.customerMobile %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Customer Email:</span>
+            <span class="info-value"><%= order.customerEmail %></span>
+          </div>
+          <% if (order.rawResponse && order.rawResponse.data && order.rawResponse.data.paymentQr) { %>
+            <div class="info-item" style="flex-direction: column; align-items: center; gap: 8px; padding: 12px 0;">
+              <span class="info-label" style="font-weight: 700; color: var(--fawry-amber);">Fawry QR Code:</span>
+              <img src="<%= order.rawResponse.data.paymentQr %>" alt="Fawry QR Code" style="width: 160px; height: 160px; border-radius: 8px; border: 2px solid var(--border-color); background: white; padding: 6px;">
+            </div>
+          <% } %>
+          <% if (order.rawResponse && order.rawResponse.data && order.rawResponse.data.paymentDeepLink) { %>
+            <div class="info-item">
+              <span class="info-label">Deep Link:</span>
+              <a href="<%= order.rawResponse.data.paymentDeepLink %>" target="_blank" class="info-value" style="color: var(--fawry-amber); text-decoration: underline; word-break: break-all;">
+                Open MyFawry Deep Link ↗
+              </a>
+            </div>
+          <% } %>
+          <div class="info-item">
+            <span class="info-label">Expiry Timestamp:</span>
+            <span class="info-value"><%= order.paymentExpiryDate ? new Date(order.paymentExpiryDate).toLocaleString() : 'No expiry set' %></span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Created At:</span>
+            <span class="info-value"><%= new Date(order.createdAt).toLocaleString() %></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Status Simulation for Testing -->
+      <div class="info-card">
+        <h3 class="card-title">Simulate Fawry Update (Testing Sandbox)</h3>
+        <p class="text-sm text-muted">
+          Need to test status changes without waiting for the staging emulator? Trigger an instant status update or webhook payload:
+        </p>
+
+        <div class="quick-sim-buttons">
+          <button class="btn btn-sm btn-success" onclick="quickSimulateWebhook('<%= order.merchantRefNum %>', 'PAID')">
+            ✓ Update to PAID (Push Webhook)
+          </button>
+          <button class="btn btn-sm btn-amber" onclick="quickSimulateWebhook('<%= order.merchantRefNum %>', 'EXPIRED')">
+            ⏰ Update to EXPIRED
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="quickSimulateWebhook('<%= order.merchantRefNum %>', 'FAILED')">
+            ✕ Update to FAILED
+          </button>
+        </div>
+
+        <div class="sim-note">
+          Simulating dispatches a real Server Notification V2 structure to your system with calculated SHA-256 signature and records it in the Webhooks Inspector.
+        </div>
+      </div>
+    </div>
+
+    <!-- History Timeline -->
+    <div class="section-block">
+      <h3 class="section-title">Order Lifecycle Timeline</h3>
+      <div class="timeline">
+        <% order.history.forEach((h, index) => { %>
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <span class="timeline-action"><%= h.action %></span>
+                <span class="timeline-source badge-xs"><%= h.source || 'SYSTEM' %></span>
+                <span class="timeline-time"><%= new Date(h.timestamp).toLocaleTimeString() %> (<%= new Date(h.timestamp).toLocaleDateString() %>)</span>
+              </div>
+              <% if (h.from && h.to) { %>
+                <div class="timeline-change">
+                  Status changed from <span class="badge-old"><%= h.from %></span> → <span class="badge-new"><%= h.to %></span>
+                </div>
+              <% } %>
+              <% if (h.details && Object.keys(h.details).length > 0) { %>
+                <details class="json-details">
+                  <summary>View event details</summary>
+                  <pre class="json-box"><code><%= JSON.stringify(h.details, null, 2) %></code></pre>
+                </details>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+
+    <!-- Raw API Responses -->
+    <% if (order.rawResponse || order.lastInquiryResponse) { %>
+      <div class="section-block">
+        <h3 class="section-title">Raw Fawry API Payloads</h3>
+        <div class="tabs-wrap">
+          <% if (order.rawResponse) { %>
+            <div class="code-card">
+              <div class="code-card-header">Charge Request / Response</div>
+              <pre class="json-box"><code><%= JSON.stringify(order.rawResponse, null, 2) %></code></pre>
+            </div>
+          <% } %>
+          <% if (order.lastInquiryResponse) { %>
+            <div class="code-card">
+              <div class="code-card-header">Latest Status Inquiry (Get Payment Status V2)</div>
+              <pre class="json-box"><code><%= JSON.stringify(order.lastInquiryResponse, null, 2) %></code></pre>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+</main>
+
+<%- include('partials/footer') %>
